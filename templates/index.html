@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Speech Converter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-brands fa-microsoft"></i>
+                <h1>Azure Speech Converter</h1>
+            </div>
+            <nav class="nav-links">
+    <a href="/" class="nav-link"><i class="fa-solid fa-home"></i> Home</a>
+    <a href="/about" class="nav-link"><i class="fa-solid fa-circle-info"></i> About</a>
+</nav>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <div class="theme-icon active" id="light-icon">
+                    <i class="fa-solid fa-sun"></i>
+                </div>
+                <div class="theme-icon" id="dark-icon">
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-volume-high"></i> Text to Speech</h2>
+            <textarea id="tts-text" placeholder="Type or paste your text here..." rows="5"></textarea>
+            
+            <div class="voice-selector">
+                <div class="voice-option active" data-voice="en-US-JennyNeural" onclick="selectVoice(this)">
+                    <i class="fa-solid fa-venus"></i> Female Voice
+                </div>
+                <div class="voice-option" data-voice="en-US-GuyNeural" onclick="selectVoice(this)">
+                    <i class="fa-solid fa-mars"></i> Male Voice
+                </div>
+            </div>
+            
+            <button onclick="textToSpeech()">
+                <i class="fa-solid fa-play"></i> Speak
+            </button>
+            <div id="tts-status"></div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-microphone"></i> Speech to Text</h2>
+            
+            <!-- Input Method Toggle -->
+            <div class="input-method-toggle">
+                <button class="toggle-btn active" id="mic-toggle" onclick="switchInputMethod('mic')">
+                    <i class="fa-solid fa-microphone"></i> Use Microphone
+                </button>
+                <button class="toggle-btn" id="file-toggle" onclick="switchInputMethod('file')">
+                    <i class="fa-solid fa-file-audio"></i> Upload Audio File
+                </button>
+            </div>
+            
+            <!-- Microphone Input Section -->
+            <div id="mic-section" class="input-section">
+                <div class="recording-container">
+                    <div class="visualizer" id="visualizer">
+                        <div class="circle circle-outer"></div>
+                        <div class="circle circle-middle"></div>
+                        <div class="circle circle-inner">
+                            <i class="fa-solid fa-microphone"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="start-btn" onclick="startRecording()">
+                            <i class="fa-solid fa-circle"></i> Start Recording
+                        </button>
+                        <button id="stop-btn" class="stop-btn" onclick="stopRecording()" style="display: none;" disabled>
+                            <i class="fa-solid fa-stop"></i> Stop Recording
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Upload Section -->
+            <div id="file-section" class="input-section" style="display: none;">
+                <p style="color: var(--text-secondary-light); margin-bottom: 20px; font-size: 14px; text-align: center;">
+                    Upload an audio file (WAV, MP3, OGG, M4A, FLAC) to transcribe. Max size: 16MB.
+                </p>
+                
+                <div class="file-upload-container">
+                    <input type="file" id="audio-file-input" accept=".wav,.mp3,.ogg,.m4a,.flac" style="display: none;" onchange="handleFileSelect(event)">
+                    
+                    <div class="file-drop-zone" id="drop-zone" onclick="document.getElementById('audio-file-input').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p><strong>Click to upload</strong> or drag and drop</p>
+                        <p class="file-types">WAV, MP3, OGG, M4A, FLAC (max. 16MB)</p>
+                    </div>
+                    
+                    <div id="file-info" class="file-info" style="display: none;">
+                        <i class="fa-solid fa-file-audio"></i>
+                        <div class="file-details">
+                            <p id="file-name"></p>
+                            <p id="file-size"></p>
+                        </div>
+                        <button class="remove-file-btn" onclick="removeFile()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    
+                    <button id="upload-btn" onclick="uploadAudioFile()" style="display: none; margin-top: 16px;">
+                        <i class="fa-solid fa-upload"></i> Transcribe Audio
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Shared Output Section -->
+            <div class="output empty" id="output">
+                Your transcribed text will appear here...
+            </div>
+            <div id="stt-status"></div>
+        </div>
+    </div>
+
+    <script src="static/js/scripts.js"></script>
+</body>
+</html>

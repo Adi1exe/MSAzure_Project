@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Azure Speech Converter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/about.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-brands fa-microsoft"></i>
+                <h1>Azure Speech Converter</h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <nav class="nav-links">
+                    <a href="/" class="nav-link"><i class="fa-solid fa-home"></i> Home</a>
+                    <a href="/about" class="nav-link"><i class="fa-solid fa-circle-info"></i> About</a>
+                </nav>
+                <div class="theme-toggle" onclick="toggleTheme()">
+                    <div class="theme-icon active" id="light-icon">
+                        <i class="fa-solid fa-sun"></i>
+                    </div>
+                    <div class="theme-icon" id="dark-icon">
+                        <i class="fa-solid fa-moon"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="hero">
+            <h2>About This Project</h2>
+            <p>A modern web application leveraging Microsoft Azure's powerful Cognitive Services for seamless speech-to-text and text-to-speech conversion.</p>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-lightbulb"></i> Key Features</h3>
+            <div class="features-list">
+                <div class="feature-item">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                    <div class="feature-content">
+                        <h4>Real-time Speech Recognition</h4>
+                        <p>Convert spoken words into text instantly with Azure's advanced speech recognition technology.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-volume-high"></i>
+                    <div class="feature-content">
+                        <h4>Natural Voice Synthesis</h4>
+                        <p>Transform text into natural-sounding speech with multiple voice options including male and female voices.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-palette"></i>
+                    <div class="feature-content">
+                        <h4>Modern UI/UX Design</h4>
+                        <p>Beautiful, intuitive interface with dark mode support and smooth animations for enhanced user experience.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-hand-pointer"></i>
+                    <div class="feature-content">
+                        <h4>Interactive Visualizations</h4>
+                        <p>Dynamic visual feedback with animated voice visualizer that responds to recording status.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-code"></i> Technology Stack</h3>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <i class="fa-brands fa-python"></i>
+                    <div class="tech-info">
+                        <h4>Flask</h4>
+                        <p>Python Web Framework</p>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <i class="fa-brands fa-microsoft"></i>
+                    <div class="tech-info">
+                        <h4>Azure Cognitive Services</h4>
+                        <p>Speech SDK</p>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <i class="fa-brands fa-html5"></i>
+                    <div class="tech-info">
+                        <h4>HTML5 & CSS3</h4>
+                        <p>Modern Web Standards</p>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <i class="fab fa-js"></i>
+                    <div class="tech-info">
+                        <h4>JavaScript</h4>
+                        <p>Interactive Functionality</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-link"></i> Connect With Me</h3>
+            <p style="margin-bottom: 20px; color: var(--text-secondary-light);">
+                Feel free to reach out, connect, or check out my other projects!
+            </p>
+            <div class="social-links">
+                <a href="https://adityadolas.netlify.app/" target="_blank" rel="noopener noreferrer" class="social-btn portfolio-btn">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>Visit Portfolio</span>
+                </a>
+                <a href="https://www.linkedin.com/in/aditya-dolas-992a44265/" target="_blank" rel="noopener noreferrer" class="social-btn linkedin-btn">
+                    <i class="fa-brands fa-linkedin"></i>
+                    <span>LinkedIn</span>
+                </a>
+                <a href="https://x.com/DolasAditya" target="_blank" rel="noopener noreferrer" class="social-btn twitter-btn">
+                    <i class="fa-brands fa-x-twitter"></i>
+                    <span>Twitter / X</span>
+                </a>
+                <a href="https://www.instagram.com/heyyyyadi/" target="_blank" rel="noopener noreferrer" class="social-btn instagram-btn">
+                    <i class="fa-brands fa-instagram"></i>
+                    <span>Instagram</span>
+                </a>
+                <a href="https://github.com/Adi1exe" target="_blank" rel="noopener noreferrer" class="social-btn github-btn">
+                    <i class="fa-brands fa-github"></i>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h3><i class="fa-solid fa-rocket"></i> Ready to Try It?</h3>
+            <p>Experience the power of Azure Speech Services with our intuitive interface.</p>
+            <a href="/" class="cta-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to App
+            </a>
+        </div>
+    </div>
+
+    <script src="static/js/about.js"></script>
+</body>
+</html>
