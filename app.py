@@ -12,11 +12,11 @@ dotenv.load_dotenv()
 SPEECH_KEY = os.getenv("API_KEY")
 SPEECH_REGION = os.getenv("REGION")
 
-UPLOAD_FOLDER = '/tmp/uploads'
+UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'ogg', 'm4a', 'flac', 'wma', 'aac'}
 
 if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(UPLOAD_FOLDER)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
@@ -141,3 +141,4 @@ def upload_audio():
 if __name__ == "__main__":
 
     app.run(debug=True)
+
