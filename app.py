@@ -4,6 +4,7 @@ import os
 import time
 import dotenv
 from werkzeug.utils import secure_filename
+import base64
 
 app = Flask(__name__)
 
@@ -12,7 +13,8 @@ dotenv.load_dotenv()
 SPEECH_KEY = os.getenv("API_KEY")
 SPEECH_REGION = os.getenv("REGION")
 
-UPLOAD_FOLDER = 'uploads'
+# Vercel only allows writing to the /tmp directory
+UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'ogg', 'm4a', 'flac', 'wma', 'aac'}
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -41,30 +43,39 @@ def text_to_speech():
     speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
     speech_config.speech_synthesis_voice_name = voice
     
-    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+    # CHANGE: Set audio_config to None to prevent looking for a speaker (serverless has no speakers)
+    # This forces the synthesizer to write to memory
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
     
     result = synthesizer.speak_text_async(text).get()
     
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-        return jsonify({"status": "success", "message": "Speech output played"})
+        # CHANGE: Encode the binary audio data to base64 string
+        audio_base64 = base64.b64encode(result.audio_data).decode('utf-8')
+        return jsonify({
+            "status": "success", 
+            "message": "Speech generated",
+            "audio_data": audio_base64 # Send this data back to frontend to play
+        })
     else:
         return jsonify({"status": "error", "message": "Speech synthesis failed"}), 500
 
 @app.route("/speech-to-text", methods=["POST"])
 def speech_to_text():
-    speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
-    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
-    recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-    
-    result = recognizer.recognize_once_async().get()
-    
-    if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        return jsonify({"status": "success", "transcript": result.text})
-    elif result.reason == speechsdk.ResultReason.NoMatch:
-        return jsonify({"status": "no_match", "transcript": ""})
-    else:
-        return jsonify({"status": "error", "transcript": ""}), 500
+    # NOTE: This endpoint attempts to use the server's microphone.
+    # On Vercel/Cloud hosting, there is no microphone hardware.
+    # We return a specific error so the UI handles it gracefully.
+    return jsonify({
+        "status": "error", 
+        "message": "Server-side microphone not supported on Cloud deployment. Please use File Upload."
+    }), 400
+
+    # Original code kept for reference (only works locally):
+    # speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
+    # audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+    # recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+    # result = recognizer.recognize_once_async().get()
+    # ...
 
 def transcribe_audio_file(filepath):
     speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
@@ -88,6 +99,7 @@ def transcribe_audio_file(filepath):
 
     recognizer.start_continuous_recognition()
 
+    # Wait for completion
     while not done:
         time.sleep(0.5)
 
@@ -111,11 +123,13 @@ def upload_audio():
     filepath = None
     try:
         filename = secure_filename(file.filename)
+        # Using the /tmp UPLOAD_FOLDER defined at the top
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
         transcript = transcribe_audio_file(filepath)
         
+        # Cleanup: Remove the file from /tmp after processing
         if os.path.exists(filepath):
             os.remove(filepath)
         
@@ -139,6 +153,4 @@ def upload_audio():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-
     app.run(debug=True)
-
