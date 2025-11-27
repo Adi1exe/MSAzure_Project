@@ -92,12 +92,17 @@
                 });
 
                 const data = await response.json();
-                
-                if (data.status === 'success') {
-                    showStatus(statusDiv, 'Speech played successfully!', 'success');
-                } else {
-                    showStatus(statusDiv, 'Failed to play speech', 'error');
-                }
+        
+        if (data.status === 'success') {
+            // CHANGE: Play the audio received from the server
+            if (data.audio_data) {
+                const audio = new Audio("data:audio/wav;base64," + data.audio_data);
+                audio.play();
+                showStatus(statusDiv, 'Speech playing...', 'success');
+            }
+        } else {
+            showStatus(statusDiv, 'Failed to play speech', 'error');
+        }
             } catch (error) {
                 showStatus(statusDiv, 'Error: ' + error.message, 'error');
             }
@@ -259,4 +264,5 @@
             setTimeout(() => {
                 element.innerHTML = '';
             }, 3000);
+
         }
