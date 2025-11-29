@@ -1,27 +1,24 @@
 from flask import Flask, render_template, request, jsonify
 import azure.cognitiveservices.speech as speechsdk
 import os
-import time
-import dotenv
 from werkzeug.utils import secure_filename
-import base64
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
-dotenv.load_dotenv()
+SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
+SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION")
 
-SPEECH_KEY = os.getenv("API_KEY")
-SPEECH_REGION = os.getenv("REGION")
-
-# Vercel only allows writing to the /tmp directory
-UPLOAD_FOLDER = '/tmp'
+UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'ogg', 'm4a', 'flac', 'wma', 'aac'}
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -38,119 +35,135 @@ def about():
 def text_to_speech():
     data = request.get_json()
     text = data.get("text")
-    voice = data.get("voice", "en-US-JennyNeural")
+    voice = data.get("voice", "en-US-JennyNeural")  
     
     speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
     speech_config.speech_synthesis_voice_name = voice
     
-    # CHANGE: Set audio_config to None to prevent looking for a speaker (serverless has no speakers)
-    # This forces the synthesizer to write to memory
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
     
     result = synthesizer.speak_text_async(text).get()
     
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-        # CHANGE: Encode the binary audio data to base64 string
-        audio_base64 = base64.b64encode(result.audio_data).decode('utf-8')
-        return jsonify({
-            "status": "success", 
-            "message": "Speech generated",
-            "audio_data": audio_base64 # Send this data back to frontend to play
-        })
+        return jsonify({"status": "success", "message": "Speech output played"})
     else:
         return jsonify({"status": "error", "message": "Speech synthesis failed"}), 500
 
 @app.route("/speech-to-text", methods=["POST"])
 def speech_to_text():
-    # NOTE: This endpoint attempts to use the server's microphone.
-    # On Vercel/Cloud hosting, there is no microphone hardware.
-    # We return a specific error so the UI handles it gracefully.
-    return jsonify({
-        "status": "error", 
-        "message": "Server-side microphone not supported on Cloud deployment. Please use File Upload."
-    }), 400
-
-    # Original code kept for reference (only works locally):
-    # speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
-    # audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
-    # recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-    # result = recognizer.recognize_once_async().get()
-    # ...
-
-def transcribe_audio_file(filepath):
+    """Convert speech from microphone to text using Azure Speech Service"""
+    
     speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
-    audio_config = speechsdk.audio.AudioConfig(filename=filepath)
+    
+    
+    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
     recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
-
-    all_results = []
-    done = False
-
-    def handle_recognized(evt):
-        if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            all_results.append(evt.result.text)
-
-    def handle_session_stopped(evt):
-        nonlocal done
-        done = True
-
-    recognizer.recognized.connect(handle_recognized)
-    recognizer.session_stopped.connect(handle_session_stopped)
-    recognizer.canceled.connect(handle_session_stopped)
-
-    recognizer.start_continuous_recognition()
-
-    # Wait for completion
-    while not done:
-        time.sleep(0.5)
-
-    recognizer.stop_continuous_recognition()
-
-    return " ".join(all_results)
+    
+    
+    result = recognizer.recognize_once_async().get()
+    
+    if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        return jsonify({"status": "success", "transcript": result.text})
+    elif result.reason == speechsdk.ResultReason.NoMatch:
+        return jsonify({"status": "no_match", "transcript": ""})
+    else:
+        return jsonify({"status": "error", "transcript": ""}), 500
 
 @app.route("/upload-audio", methods=["POST"])
 def upload_audio():
+    """Upload audio file and convert to text using Azure Speech Service"""
+    
     if 'audio_file' not in request.files:
         return jsonify({"status": "error", "message": "No file uploaded"}), 400
     
     file = request.files['audio_file']
     
+    
     if file.filename == '':
         return jsonify({"status": "error", "message": "No file selected"}), 400
     
+    
     if not allowed_file(file.filename):
-        return jsonify({"status": "error", "message": f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS).upper()}"}), 400
+        return jsonify({
+            "status": "error", 
+            "message": f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS).upper()}"
+        }), 400
     
     filepath = None
     try:
+        
         filename = secure_filename(file.filename)
-        # Using the /tmp UPLOAD_FOLDER defined at the top
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        transcript = transcribe_audio_file(filepath)
         
-        # Cleanup: Remove the file from /tmp after processing
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
         
-        if transcript:
+        
+        audio_config = speechsdk.audio.AudioConfig(filename=filepath)
+        recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+        
+        
+        result = recognizer.recognize_once_async().get()
+        
+        
+        transcript = result.text
+        reason = result.reason
+        
+        
+        del recognizer
+        del audio_config
+        
+        
+        import time
+        time.sleep(0.1)
+        
+        
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except PermissionError:
+            
+            time.sleep(0.5)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        
+        
+        if reason == speechsdk.ResultReason.RecognizedSpeech:
             return jsonify({
                 "status": "success", 
                 "transcript": transcript,
                 "filename": filename
             })
-        else:
+        elif reason == speechsdk.ResultReason.NoMatch:
             return jsonify({
                 "status": "no_match", 
                 "transcript": "",
                 "message": "No speech detected in audio file"
             })
+        else:
+            return jsonify({
+                "status": "error", 
+                "transcript": "",
+                "message": "Recognition failed"
+            }), 500
             
     except Exception as e:
+        
         if filepath and os.path.exists(filepath):
-            os.remove(filepath)
-        print(f"An error occurred: {e}") 
+            try:
+                import time
+                time.sleep(0.5)
+                os.remove(filepath)
+            except:
+                pass  
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
+    
+    if not SPEECH_KEY or not SPEECH_REGION:
+        print("ERROR: Please set AZURE_SPEECH_KEY and AZURE_SPEECH_REGION in your .env file")
+        exit(1)
+    
     app.run(debug=True)
