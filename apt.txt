@@ -1,0 +1,6 @@
+libssl-dev
+libasound2
+libasound2-dev
+libgcc1
+libc++1
+libc++abi1
